@@ -4,6 +4,7 @@ inherit image
 
 IMAGE_INSTALL += " \
     coreutils \
+    kmod \
     qemu \
     util-linux \
 "
