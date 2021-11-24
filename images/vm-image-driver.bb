@@ -4,6 +4,7 @@ inherit image
 
 IMAGE_INSTALL += " \
     coreutils \
+    kernel-module-sel4-virtio \
     kmod \
     qemu \
     util-linux \
