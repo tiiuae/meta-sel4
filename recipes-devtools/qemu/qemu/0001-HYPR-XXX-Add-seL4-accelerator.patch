@@ -1,0 +1,274 @@
+From f399ff2de3ef392707316e5b636f4742dd5c4290 Mon Sep 17 00:00:00 2001
+From: Hannu Lyytinen <hannu.lyytinen@unikie.com>
+Date: Wed, 1 Dec 2021 13:26:35 +0200
+Subject: [PATCH] HYPR-XXX Add seL4 accelerator
+
+Signed-off-by: Hannu Lyytinen <hannu.lyytinen@unikie.com>
+---
+ accel/Kconfig          |  3 ++
+ accel/meson.build      |  2 ++
+ accel/sel4/meson.build |  1 +
+ accel/sel4/sel4-all.c  | 76 ++++++++++++++++++++++++++++++++++++++++++
+ configure              | 12 ++++++-
+ meson.build            |  6 ++++
+ meson_options.txt      |  2 ++
+ qemu-options.hx        |  8 ++---
+ 8 files changed, 105 insertions(+), 5 deletions(-)
+ create mode 100644 accel/sel4/meson.build
+ create mode 100644 accel/sel4/sel4-all.c
+
+diff --git a/accel/Kconfig b/accel/Kconfig
+index 461104c77..9a5e9d183 100644
+--- a/accel/Kconfig
++++ b/accel/Kconfig
+@@ -13,6 +13,9 @@ config TCG
+ config KVM
+     bool
+ 
++config SEL4
++    bool
++
+ config XEN
+     bool
+     select FSDEV_9P if VIRTFS
+diff --git a/accel/meson.build b/accel/meson.build
+index b44ba30c8..7016b3054 100644
+--- a/accel/meson.build
++++ b/accel/meson.build
+@@ -6,6 +6,7 @@ subdir('qtest')
+ subdir('kvm')
+ subdir('tcg')
+ subdir('xen')
++subdir('sel4')
+ subdir('stubs')
+ 
+ dummy_ss = ss.source_set()
+@@ -15,3 +16,4 @@ dummy_ss.add(files(
+ 
+ specific_ss.add_all(when: ['CONFIG_SOFTMMU', 'CONFIG_POSIX'], if_true: dummy_ss)
+ specific_ss.add_all(when: ['CONFIG_XEN'], if_true: dummy_ss)
++specific_ss.add_all(when: ['CONFIG_SEL4'], if_true: dummy_ss)
+diff --git a/accel/sel4/meson.build b/accel/sel4/meson.build
+new file mode 100644
+index 000000000..ce532d4fa
+--- /dev/null
++++ b/accel/sel4/meson.build
+@@ -0,0 +1 @@
++specific_ss.add(when: 'CONFIG_SEL4', if_true: files('sel4-all.c'))
+diff --git a/accel/sel4/sel4-all.c b/accel/sel4/sel4-all.c
+new file mode 100644
+index 000000000..bccd80df9
+--- /dev/null
++++ b/accel/sel4/sel4-all.c
+@@ -0,0 +1,76 @@
++#include "qemu/osdep.h"
++#include "qemu/error-report.h"
++#include "qemu/module.h"
++#include "qapi/error.h"
++#include "qemu/accel.h"
++#include "sysemu/cpus.h"
++#include "hw/boards.h"
++
++bool sel4_allowed;
++
++static void sel4_setup_post(MachineState *ms, AccelState *accel)
++{
++}
++
++static int sel4_init(MachineState *ms)
++{
++    MachineClass *mc = MACHINE_GET_CLASS(ms);
++    /*
++     * opt out of system RAM being allocated by generic code
++     */
++//    mc->default_ram_id = NULL;
++    return 0;
++}
++
++static void sel4_accel_class_init(ObjectClass *oc, void *data)
++{
++    AccelClass *ac = ACCEL_CLASS(oc);
++//    static GlobalProperty compat[] = {
++//        { "migration", "store-global-state", "off" },
++//        { "migration", "send-configuration", "off" },
++//        { "migration", "send-section-footer", "off" },
++//    };
++
++    ac->name = "seL4";
++    ac->init_machine = sel4_init;
++    ac->setup_post = sel4_setup_post;
++    ac->allowed = &sel4_allowed;
++//    ac->compat_props = g_ptr_array_new();
++//
++//    compat_props_add(ac->compat_props, compat, G_N_ELEMENTS(compat));
++//
++//    object_class_property_add_bool(oc, "igd-passthru",
++//        sel4_get_igd_gfx_passthru, sel4_set_igd_gfx_passthru);
++//    object_class_property_set_description(oc, "igd-passthru",
++//        "Set on/off to enable/disable igd passthrou");
++}
++
++#define TYPE_SEL4_ACCEL ACCEL_CLASS_NAME("sel4")
++
++static const TypeInfo sel4_accel_type = {
++    .name = TYPE_SEL4_ACCEL,
++    .parent = TYPE_ACCEL,
++    .class_init = sel4_accel_class_init,
++};
++
++static void sel4_accel_ops_class_init(ObjectClass *oc, void *data)
++{
++    AccelOpsClass *ops = ACCEL_OPS_CLASS(oc);
++
++    ops->create_vcpu_thread = dummy_start_vcpu_thread;
++}
++
++static const TypeInfo sel4_accel_ops_type = {
++    .name = ACCEL_OPS_NAME("sel4"),
++
++    .parent = TYPE_ACCEL_OPS,
++    .class_init = sel4_accel_ops_class_init,
++    .abstract = true,
++};
++
++static void sel4_type_init(void)
++{
++    type_register_static(&sel4_accel_type);
++    type_register_static(&sel4_accel_ops_type);
++}
++type_init(sel4_type_init);
+diff --git a/configure b/configure
+index d57c79820..37f4e1099 100755
+--- a/configure
++++ b/configure
+@@ -331,6 +331,7 @@ vnc_sasl="auto"
+ vnc_jpeg="auto"
+ vnc_png="auto"
+ xkbcommon="auto"
++sel4="auto"
+ xen="$default_feature"
+ xen_ctrl_version="$default_feature"
+ xen_pci_passthrough="auto"
+@@ -1083,6 +1084,10 @@ for opt do
+   ;;
+   --enable-netmap) netmap="yes"
+   ;;
++  --disable-sel4) sel4="disabled"
++  ;;
++  --enable-sel4) sel4="enabled"
++  ;;
+   --disable-xen) xen="disabled"
+   ;;
+   --enable-xen) xen="enabled"
+@@ -1843,6 +1848,7 @@ disabled with --disable-FEATURE, default is enabled if available
+   virtiofsd       build virtiofs daemon (virtiofsd)
+   libudev         Use libudev to enumerate host devices
+   mpath           Multipath persistent reservation passthrough
++  sel4            seL4 backend driver support
+   xen             xen backend driver support
+   xen-pci-passthrough    PCI passthrough support for Xen
+   brlapi          BrlAPI (Braile)
+@@ -2474,6 +2480,10 @@ EOF
+   fi
+ fi
+ 
++##########################################
++# seL4 probe
++
++
+ ##########################################
+ # xen probe
+ 
+@@ -6434,7 +6444,7 @@ NINJA=$ninja $meson setup \
+         -Db_coverage=$(if test "$gcov" = yes; then echo true; else echo false; fi) \
+         -Db_lto=$lto -Dcfi=$cfi -Dcfi_debug=$cfi_debug \
+         -Dmalloc=$malloc -Dmalloc_trim=$malloc_trim -Dsparse=$sparse \
+-        -Dkvm=$kvm -Dhax=$hax -Dwhpx=$whpx -Dhvf=$hvf \
++        -Dkvm=$kvm -Dhax=$hax -Dwhpx=$whpx -Dhvf=$hvf -Dsel4=$sel4 \
+         -Dxen=$xen -Dxen_pci_passthrough=$xen_pci_passthrough -Dtcg=$tcg \
+         -Dcocoa=$cocoa -Dgtk=$gtk -Dmpath=$mpath -Dsdl=$sdl -Dsdl_image=$sdl_image \
+         -Dvnc=$vnc -Dvnc_sasl=$vnc_sasl -Dvnc_jpeg=$vnc_jpeg -Dvnc_png=$vnc_png \
+diff --git a/meson.build b/meson.build
+index c6f4b0cf5..554c553dc 100644
+--- a/meson.build
++++ b/meson.build
+@@ -91,6 +91,8 @@ if cpu in ['x86', 'x86_64']
+   }
+ endif
+ 
++accelerator_targets += { 'CONFIG_SEL4': ['aarch64-softmmu'] }
++
+ edk2_targets = [ 'arm-softmmu', 'aarch64-softmmu', 'i386-softmmu', 'x86_64-softmmu' ]
+ install_edk2_blobs = false
+ if get_option('install_blobs')
+@@ -201,6 +203,9 @@ accelerators = []
+ if not get_option('kvm').disabled() and targetos == 'linux'
+   accelerators += 'CONFIG_KVM'
+ endif
++if not get_option('sel4').disabled()
++  accelerators += 'CONFIG_SEL4'
++endif
+ if not get_option('xen').disabled() and 'CONFIG_XEN_BACKEND' in config_host
+   accelerators += 'CONFIG_XEN'
+   have_xen_pci_passthrough = not get_option('xen_pci_passthrough').disabled() and targetos == 'linux'
+@@ -2576,6 +2581,7 @@ if have_system
+   summary_info += {'HAX support':       config_all.has_key('CONFIG_HAX')}
+   summary_info += {'HVF support':       config_all.has_key('CONFIG_HVF')}
+   summary_info += {'WHPX support':      config_all.has_key('CONFIG_WHPX')}
++  summary_info += {'seL4 support':      config_all.has_key('CONFIG_SEL4')}
+   summary_info += {'Xen support':       config_host.has_key('CONFIG_XEN_BACKEND')}
+   if config_host.has_key('CONFIG_XEN_BACKEND')
+     summary_info += {'xen ctrl version':  config_host['CONFIG_XEN_CTRL_INTERFACE_VERSION']}
+diff --git a/meson_options.txt b/meson_options.txt
+index 973401999..22c2ace79 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -33,6 +33,8 @@ option('whpx', type: 'feature', value: 'auto',
+        description: 'WHPX acceleration support')
+ option('hvf', type: 'feature', value: 'auto',
+        description: 'HVF acceleration support')
++option('sel4', type: 'feature', value: 'auto',
++       description: 'seL4 backend support')
+ option('xen', type: 'feature', value: 'auto',
+        description: 'Xen backend support')
+ option('xen_pci_passthrough', type: 'feature', value: 'auto',
+diff --git a/qemu-options.hx b/qemu-options.hx
+index fd21002bd..beed70585 100644
+--- a/qemu-options.hx
++++ b/qemu-options.hx
+@@ -26,7 +26,7 @@ DEF("machine", HAS_ARG, QEMU_OPTION_machine, \
+     "-machine [type=]name[,prop[=value][,...]]\n"
+     "                selects emulated machine ('-machine help' for list)\n"
+     "                property accel=accel1[:accel2[:...]] selects accelerator\n"
+-    "                supported accelerators are kvm, xen, hax, hvf, whpx or tcg (default: tcg)\n"
++    "                supported accelerators are kvm, xen, sel4, hax, hvf, whpx or tcg (default: tcg)\n"
+     "                vmport=on|off|auto controls emulation of vmport (default: auto)\n"
+     "                dump-guest-core=on|off include guest memory in a core dump (default=on)\n"
+     "                mem-merge=on|off controls memory merge support (default: on)\n"
+@@ -58,7 +58,7 @@ SRST
+ 
+     ``accel=accels1[:accels2[:...]]``
+         This is used to enable an accelerator. Depending on the target
+-        architecture, kvm, xen, hax, hvf, whpx or tcg can be available.
++        architecture, kvm, xen, sel4, hax, hvf, whpx or tcg can be available.
+         By default, tcg is used. If there is more than one accelerator
+         specified, the next one is used if the previous one fails to
+         initialize.
+@@ -135,7 +135,7 @@ ERST
+ 
+ DEF("accel", HAS_ARG, QEMU_OPTION_accel,
+     "-accel [accel=]accelerator[,prop[=value][,...]]\n"
+-    "                select accelerator (kvm, xen, hax, hvf, whpx or tcg; use 'help' for a list)\n"
++    "                select accelerator (kvm, xen, sel4, hax, hvf, whpx or tcg; use 'help' for a list)\n"
+     "                igd-passthru=on|off (enable Xen integrated Intel graphics passthrough, default=off)\n"
+     "                kernel-irqchip=on|off|split controls accelerated irqchip support (default=on)\n"
+     "                kvm-shadow-mem=size of KVM shadow MMU in bytes\n"
+@@ -145,7 +145,7 @@ DEF("accel", HAS_ARG, QEMU_OPTION_accel,
+ SRST
+ ``-accel name[,prop=value[,...]]``
+     This is used to enable an accelerator. Depending on the target
+-    architecture, kvm, xen, hax, hvf, whpx or tcg can be available. By
++    architecture, kvm, xen, sel4, hax, hvf, whpx or tcg can be available. By
+     default, tcg is used. If there is more than one accelerator
+     specified, the next one is used if the previous one fails to
+     initialize.
