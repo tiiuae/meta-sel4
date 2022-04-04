@@ -22,7 +22,7 @@ exec /usr/bin/qemu-system-aarch64 \
 	--accel sel4 \
 	-M virt \
 	`# use CAmkES dataport for the system memory` \
-	-object memory-backend-file,id=virt.ram,size=${MEMSZ}M,mem-path=/dev/uio1,share=on \
+	-object memory-backend-file,id=virt.ram,size=${MEMSZ}M,mem-path=/dev/uio1,offset=4096,share=on \
 	-machine memory-backend=virt.ram \
 	-m ${MEMSZ}m \
 	`# virtio-blk device for guest rootfs` \
