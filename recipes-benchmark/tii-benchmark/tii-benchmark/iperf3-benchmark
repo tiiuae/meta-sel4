@@ -1,0 +1,9 @@
+#! /bin/sh
+
+set -e
+
+. ~/iperf3-setup
+
+while :; do
+  /usr/bin/iperf3 -c ${SERVERIP} -f K
+done

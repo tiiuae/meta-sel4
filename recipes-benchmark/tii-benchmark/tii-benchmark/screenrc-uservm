@@ -1,0 +1,10 @@
+startup_message off
+
+escape ^Bb
+
+defscrollback 5000
+
+screen -t BASH /bin/sh
+screen -t DD /usr/bin/dd-benchmark
+screen -t IPERF /usr/bin/iperf3-benchmark
+screen -t CONSOLE /usr/bin/console-stress-test
