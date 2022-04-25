@@ -1,0 +1,6 @@
+#! /bin/sh
+
+while true; do
+  echo 3 > /proc/sys/vm/drop_caches
+  time dd if=/dev/vda2 of=/dev/null bs=1M count=20
+done
