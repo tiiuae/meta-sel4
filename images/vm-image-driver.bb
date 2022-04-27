@@ -10,3 +10,9 @@ IMAGE_INSTALL += " \
 "
 
 export IMAGE_BASENAME = "vm-image-driver"
+
+fix_hostname() {
+    echo "driver-vm" > ${IMAGE_ROOTFS}/etc/hostname
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "fix_hostname; "
