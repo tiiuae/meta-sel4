@@ -14,3 +14,9 @@ IMAGE_INSTALL += " \
 "
 
 export IMAGE_BASENAME = "vm-image-user"
+
+fix_hostname() {
+    echo "user-vm" > ${IMAGE_ROOTFS}/etc/hostname
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "fix_hostname; "
