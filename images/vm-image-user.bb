@@ -2,10 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-SUMMARY = "User VM"
-
 require recipes-core/images/core-image-minimal.bb
-inherit image-hostname
+inherit image-hostname vm-image-features
+
+SUMMARY = "User VM"
 
 IMAGE_ROOTFS_EXTRA_SPACE = "327680"
 
@@ -13,9 +13,8 @@ IMAGE_FSTYPES += " \
     wic.qcow2 \
 "
 
-IMAGE_INSTALL += " \
-    screen \
-    tii-benchmark \
+IMAGE_FEATURES += " \
+    benchmark \
 "
 
 export IMAGE_BASENAME = "vm-image-user"
