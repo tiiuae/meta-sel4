@@ -1,6 +1,11 @@
+# Copyright 2022, Technology Innovation Institute
+#
+# SPDX-License-Identifier: Apache-2.0
+
 SUMMARY = "User VM"
 
 require recipes-core/images/core-image-minimal.bb
+inherit image-hostname
 
 IMAGE_ROOTFS_EXTRA_SPACE = "327680"
 
@@ -14,9 +19,4 @@ IMAGE_INSTALL += " \
 "
 
 export IMAGE_BASENAME = "vm-image-user"
-
-fix_hostname() {
-    echo "user-vm" > ${IMAGE_ROOTFS}/etc/hostname
-}
-
-ROOTFS_POSTPROCESS_COMMAND += "fix_hostname; "
+export VM_IMAGE_HOSTNAME = "user-vm"
