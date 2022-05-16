@@ -11,4 +11,10 @@ export IMAGE_BASENAME = "vm-image-driver-gui"
 IMAGE_FEATURES += " \
     x11 \
     gui-benchmark \
-"
+    "
+
+VM_GUEST_IMAGES = " \
+    vm-image-user-gui \
+    "
+
+VM_GUEST_IMAGE_vm-image-user-gui = "user-vm.qcow2"

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 require recipes-core/images/core-image-minimal.bb
-inherit image-hostname vm-image-features
+inherit image-hostname vm-image-features vm-guest-images-install
 
 SUMMARY = "Driver VM"
 
@@ -15,3 +15,8 @@ IMAGE_FEATURES += " \
 export IMAGE_BASENAME = "vm-image-driver"
 
 export VM_IMAGE_HOSTNAME = "driver-vm"
+
+VM_GUEST_IMAGES ?= " \
+    vm-image-user \
+    "
+VM_GUEST_IMAGE_vm-image-user = "user-vm.qcow2"
