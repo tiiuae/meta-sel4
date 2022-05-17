@@ -1,13 +1,14 @@
-#! /bin/sh
+#!/bin/sh
 
 # guest memory size in megabytes
 # TODO: autoprobe from uio
 MEMSZ=128
 
 # rootfs for guest
-ROOTFS='/myimg.qcow2'
+GUEST_IMG="${GUEST_IMG:-/var/lib/virt/images/user-vm.qcow2}"
 # directory shared to guest
-SHARED='/shared'
+GUEST_SHARED="${GUEST_SHARED:-$HOME/.local/share/virt/shared}"
+mkdir -p "$GUEST_SHARED"
 
 # CAmkES dataports
 modprobe uio
@@ -27,9 +28,9 @@ exec /usr/bin/qemu-system-aarch64 \
 	-m ${MEMSZ}m \
 	`# virtio-blk device for guest rootfs` \
 	-device virtio-blk-pci,drive=drive0,id=virtblk0 \
-	-drive format=qcow2,file=${ROOTFS},if=none,id=drive0 \
+	-drive format=qcow2,file=${GUEST_IMG},if=none,id=drive0 \
 	`# share directory to guest over 9P` \
-	-virtfs local,path=${SHARED},mount_tag=shared,security_model=mapped-xattr \
+	-virtfs local,path=${GUEST_SHARED},mount_tag=shared,security_model=mapped-xattr \
 	`# debug messages, use monitor to read them` \
 	-chardev ringbuf,id=debug,size=64K \
 	`# enable multiplexer on stdio to have both guest and monitor` \
