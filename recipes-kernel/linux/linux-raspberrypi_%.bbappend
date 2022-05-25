@@ -5,4 +5,5 @@ SRC_URI += " \
     file://virtio-blk.cfg \
     file://virtio-net.cfg \
     file://virtio-9p.cfg \
+    file://v3d.cfg \
 "
