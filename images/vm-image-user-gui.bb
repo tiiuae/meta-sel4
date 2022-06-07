@@ -9,6 +9,7 @@ SUMMARY = "User VM with graphics support"
 export IMAGE_BASENAME = "vm-image-user-gui"
 
 IMAGE_FEATURES += " \
+    x11 \
     gui-benchmark \
 "
 
