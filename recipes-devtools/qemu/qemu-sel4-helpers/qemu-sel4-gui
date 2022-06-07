@@ -1,0 +1,34 @@
+#!/bin/sh
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+	cat << EOF
+Run QEMU with GUI as virtio device provider for seL4 VMs.
+
+usage: $0 [-h|--help]
+EOF
+	exit 0
+fi
+
+# defaults to native resolution for full-screen
+xres="${GUEST_XRES:-$(cut -d',' -f1 /sys/class/graphics/fb0/virtual_size)}"
+yres="${GUEST_YRES:-$(cut -d',' -f2 /sys/class/graphics/fb0/virtual_size)}"
+# 16MB by default
+GUEST_VRAM=16777216
+
+# Default display options
+GUEST_DISPLAY="${GUEST_DISPLAY:--display sdl,gl=on}"
+GUEST_DISPLAY_DEVICE="${GUEST_DISPLAY_DEVICE:--device virtio-gpu-pci,virgl=on,max_hostmem=$GUEST_VRAM,xres=$xres,yres=$yres}"
+# Default misc display arguments
+GUEST_DISPLAY_ARGS="${GUEST_DISPLAY_ARGS:--full-screen}"
+
+# Variables set for qemu-sel4
+export GUEST_GUI_ARGS="${GUEST_GUI_ARGS:-\
+	$GUEST_DISPLAY \
+	$GUEST_DISPLAY_DEVICE \
+	$GUEST_DISPLAY_ARGS \
+}"
+
+# FIXME: Problems enabling 256M :(
+#export GUEST_MEMSZ="${GUEST_MEMSZ:-256}"
+
+exec qemu-sel4
