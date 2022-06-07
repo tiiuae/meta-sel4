@@ -9,6 +9,9 @@ PACKAGECONFIG = " \
     pie \
     sel4 \
     virtfs \
+    sdl \
+    glx \
+    virglrenderer \
 "
 
 SRC_URI:remove = "https://download.qemu.org/${BPN}-${PV}.tar.xz"
