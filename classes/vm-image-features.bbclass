@@ -7,6 +7,7 @@ inherit core-image
 FEATURE_PACKAGES_qemu-virtio = "\
     kernel-module-connection \
     qemu \
+    qemu-sel4-helpers \
     screen \
 "
 
