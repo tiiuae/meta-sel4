@@ -6,7 +6,8 @@ LICENSE = "CLOSED"
 
 inherit module
 
-SRC_URI = "git://git@github.com/tiiuae/camkes-vm-linux.git;protocol=ssh;branch=wip/hlyytine-virtio-blk"
+SRC_URI = "git:///workspace/projects/vm-linux;protocol=file;branch=wip/hlyytine-virtio-blk"
+#SRC_URI = "git://git@github.com/tiiuae/camkes-vm-linux.git;protocol=ssh;branch=wip/hlyytine-virtio-blk"
 SRCREV = "${AUTOREV}"
 
 SRC_URI += " \

@@ -13,7 +13,8 @@ PACKAGECONFIG = " \
 
 SRC_URI:remove = "https://download.qemu.org/${BPN}-${PV}.tar.xz"
 
-SRC_URI += "gitsm://git@github.com/tiiuae/qemu-sel4-virtio.git;protocol=ssh;destsuffix=${BPN}-${PV};branch=wip/hlyytine-virtio-blk"
+SRC_URI += "gitsm:///workspace/git/qemu;protocol=file;destsuffix=${BPN}-${PV};branch=wip/hlyytine-virtio-blk"
+# SRC_URI += "gitsm://git@github.com/tiiuae/qemu-sel4-virtio.git;protocol=ssh;destsuffix=${BPN}-${PV};branch=wip/hlyytine-virtio-blk"
 SRCREV = "${AUTOREV}"
 
 SRC_URI += " \

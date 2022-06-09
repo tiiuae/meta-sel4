@@ -11,6 +11,7 @@ IMAGE_FSTYPES += " \
 IMAGE_INSTALL += " \
     screen \
     tii-benchmark \
+    kernel-module-sel4 \
 "
 
 export IMAGE_BASENAME = "vm-image-user"
