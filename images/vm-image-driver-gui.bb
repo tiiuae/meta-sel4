@@ -13,6 +13,10 @@ IMAGE_FEATURES += " \
     gui-benchmark \
     "
 
+IMAGE_INSTALL += " \
+    x-session-rxvt \
+    "
+
 VM_GUEST_IMAGES = " \
     vm-image-user-gui \
     "

@@ -11,5 +11,8 @@ export IMAGE_BASENAME = "vm-image-user-gui"
 IMAGE_FEATURES += " \
     x11 \
     gui-benchmark \
-"
+    "
 
+IMAGE_INSTALL += " \
+    x-session-pong \
+    "
