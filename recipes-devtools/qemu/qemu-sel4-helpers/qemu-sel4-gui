@@ -9,9 +9,11 @@ EOF
 	exit 0
 fi
 
+export DISPLAY="${DISPLAY:-:0}"
+
 # defaults to native resolution for full-screen
-xres="${GUEST_XRES:-$(cut -d',' -f1 /sys/class/graphics/fb0/virtual_size)}"
-yres="${GUEST_YRES:-$(cut -d',' -f2 /sys/class/graphics/fb0/virtual_size)}"
+xres="${GUEST_XRES:-$(xdpyinfo | awk '/dimensions/{print $2}' | cut -d 'x' -f1)}"
+yres="${GUEST_YRES:-$(xdpyinfo | awk '/dimensions/{print $2}' | cut -d 'x' -f2)}"
 # 16MB by default
 GUEST_VRAM=16777216
 

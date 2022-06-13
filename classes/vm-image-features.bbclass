@@ -8,6 +8,7 @@ FEATURE_PACKAGES_qemu-virtio = "\
     kernel-module-connection \
     qemu \
     qemu-sel4-helpers \
+    qemu-sel4-helpers-gui \
     screen \
 "
 
