@@ -7,6 +7,11 @@ inherit image-hostname vm-image-features vm-guest-images-install
 
 SUMMARY = "Driver VM"
 
+IMAGE_INSTALL:append = " \
+    ${@bb.utils.contains("MACHINE_FEATURES", "pci", "pciutils", "", d)} \
+    ${@bb.utils.contains("MACHINE_FEATURES", "usbhost", "usbutils", "", d)} \
+    "
+
 IMAGE_FEATURES += " \
     qemu-virtio \
     benchmark \

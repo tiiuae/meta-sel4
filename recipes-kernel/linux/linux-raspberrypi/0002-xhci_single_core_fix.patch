@@ -1,0 +1,26 @@
+diff --git a/drivers/usb/host/xhci.c b/drivers/usb/host/xhci.c
+index 975e24e94e91..81bcc5ef8977 100644
+--- a/drivers/usb/host/xhci.c
++++ b/drivers/usb/host/xhci.c
+@@ -132,7 +132,9 @@ int xhci_start(struct xhci_hcd *xhci)
+ {
+ 	u32 temp;
+ 	int ret;
++	u32 xhc_state_tmp = xhci->xhc_state;
+ 
++	xhci->xhc_state = 0;
+ 	temp = readl(&xhci->op_regs->command);
+ 	temp |= (CMD_RUN);
+ 	xhci_dbg_trace(xhci, trace_xhci_dbg_init, "// Turn on HC, cmd = 0x%x.",
+@@ -149,9 +151,8 @@ int xhci_start(struct xhci_hcd *xhci)
+ 		xhci_err(xhci, "Host took too long to start, "
+ 				"waited %u microseconds.\n",
+ 				XHCI_MAX_HALT_USEC);
+-	if (!ret)
+-		/* clear state flags. Including dying, halted or removing */
+-		xhci->xhc_state = 0;
++	if (ret)
++		xhci->xhc_state = xhc_state_tmp;
+ 
+ 	return ret;
+ }
