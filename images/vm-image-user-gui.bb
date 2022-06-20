@@ -10,9 +10,10 @@ export IMAGE_BASENAME = "vm-image-user-gui"
 
 IMAGE_FEATURES += " \
     x11 \
+    x11-base \
     gui-benchmark \
     "
 
 IMAGE_INSTALL += " \
-    x-session-pong \
+    x-session-matchbox-wm \
     "

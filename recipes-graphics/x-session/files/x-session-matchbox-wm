@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# no screensaver, no dpms and no blank
+xset s off  > /dev/null 2>&1
+xset -dpms   > /dev/null 2>&1
+xset s noblank   > /dev/null 2>&1
+
+exec rxvt &
+exec matchbox-window-manager
