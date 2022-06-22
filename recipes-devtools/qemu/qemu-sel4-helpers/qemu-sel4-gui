@@ -11,6 +11,21 @@ fi
 
 export DISPLAY="${DISPLAY:-:0}"
 
+GUEST_MOUSE_DEV="$(ls /dev/input/by-id/ | grep -m 1 event-mouse)"
+GUEST_KBD_DEV="$(ls /dev/input/by-id/ | grep -m 1 event-kbd)"
+
+if [ "$GUEST_MOUSE_DEV" ]; then
+		GUEST_MOUSE_DEV="--device virtio-input-host-pci,evdev=/dev/input/by-id/$GUEST_MOUSE_DEV"
+	else
+		echo "Mice was not found -- skip"
+fi
+
+if [ "$GUEST_KBD_DEV" ]; then
+		GUEST_KBD_DEV="--device virtio-input-host-pci,evdev=/dev/input/by-id/$GUEST_KBD_DEV"
+	else
+		echo "KBD was not found -- skip"
+fi
+
 # defaults to native resolution for full-screen
 xres="${GUEST_XRES:-$(xdpyinfo | awk '/dimensions/{print $2}' | cut -d 'x' -f1)}"
 yres="${GUEST_YRES:-$(xdpyinfo | awk '/dimensions/{print $2}' | cut -d 'x' -f2)}"
@@ -28,6 +43,8 @@ export GUEST_GUI_ARGS="${GUEST_GUI_ARGS:-\
 	$GUEST_DISPLAY \
 	$GUEST_DISPLAY_DEVICE \
 	$GUEST_DISPLAY_ARGS \
+	$GUEST_MOUSE_DEV \
+	$GUEST_KBD_DEV \
 }"
 
 # FIXME: Problems enabling 256M :(
