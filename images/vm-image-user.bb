@@ -15,3 +15,18 @@ IMAGE_FEATURES += " \
 
 export IMAGE_BASENAME = "vm-image-user"
 export VM_IMAGE_HOSTNAME = "user-vm"
+
+add_qemu_share() {
+    mkdir -p ${IMAGE_ROOTFS}/mnt/shared
+    cat >> ${IMAGE_ROOTFS}${sysconfdir}/fstab <<EOF
+
+# Mount qemu shared folder
+shared /mnt/shared    9p      trans=virtio,version=9p2000.L   0 0
+
+EOF
+}
+
+ROOTFS_POSTPROCESS_COMMAND:append = " \
+	add_qemu_share; \
+	"
+
