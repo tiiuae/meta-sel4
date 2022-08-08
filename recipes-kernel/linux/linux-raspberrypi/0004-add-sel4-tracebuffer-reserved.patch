@@ -1,0 +1,12 @@
+diff --git a/drivers/of/platform.c b/drivers/of/platform.c
+index a16b74f32..30ab04f5a 100644
+--- a/drivers/of/platform.c
++++ b/drivers/of/platform.c
+@@ -513,6 +513,7 @@ static const struct of_device_id reserved_mem_matches[] = {
+ 	{ .compatible = "qcom,cmd-db" },
+ 	{ .compatible = "qcom,smem" },
+ 	{ .compatible = "ramoops" },
++	{ .compatible = "sel4_tracebuffer" },
+ 	{ .compatible = "nvmem-rmem" },
+ 	{ .compatible = "google,open-dice" },
+ 	{}

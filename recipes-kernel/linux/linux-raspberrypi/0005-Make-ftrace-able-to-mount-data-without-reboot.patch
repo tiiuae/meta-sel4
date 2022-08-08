@@ -1,0 +1,247 @@
+From 58aff29ea60f90276d1bb04466594252cb1c5934 Mon Sep 17 00:00:00 2001
+From: Ivan Kuznetsov <jsvapiav@gmail.com>
+Date: Wed, 5 Oct 2022 16:25:48 +0300
+Subject: [PATCH] Make ftrace able to mount data without reboot.
+
+---
+ fs/pstore/ftrace.c         | 31 +++++++++++++++++++++++++++-
+ fs/pstore/internal.h       |  2 ++
+ fs/pstore/ram.c            | 22 ++++++++++++++++++++
+ fs/pstore/ram_core.c       | 42 ++++++++++++++++++++++++++++++++++++++
+ include/linux/pstore_ram.h |  5 +++++
+ 5 files changed, 101 insertions(+), 1 deletion(-)
+
+diff --git a/fs/pstore/ftrace.c b/fs/pstore/ftrace.c
+index 5c0450701293..9956c3df6994 100644
+--- a/fs/pstore/ftrace.c
++++ b/fs/pstore/ftrace.c
+@@ -23,6 +23,29 @@
+ /* This doesn't need to be atomic: speed is chosen over correctness here. */
+ static u64 pstore_ftrace_stamp;
+ 
++#define PSTORE_USE_PMU (1)
++#define SEL4_TRACEBUFFER (1)
++
++#define read_sysreg(r) ({                                               \
++	u64 __val;                                                      \
++	asm volatile("mrs %0, " __stringify(r) : "=r" (__val));         \
++	__val;                                                          \
++})
++
++static u64 pstore_ftrace_read_pmccntr(void)
++{
++	return read_sysreg(pmccntr_el0);
++}
++
++static u64 pstore_ftrace_get_timestamp(void)
++{
++#if PSTORE_USE_PMU
++	return pstore_ftrace_read_pmccntr();
++#else
++	return pstore_ftrace_stamp++;
++#endif
++}
++
+ static void notrace pstore_ftrace_call(unsigned long ip,
+ 				       unsigned long parent_ip,
+ 				       struct ftrace_ops *op,
+@@ -44,7 +67,7 @@ static void notrace pstore_ftrace_call(unsigned long ip,
+ 
+ 	rec.ip = ip;
+ 	rec.parent_ip = parent_ip;
+-	pstore_ftrace_write_timestamp(&rec, pstore_ftrace_stamp++);
++	pstore_ftrace_write_timestamp(&rec, pstore_ftrace_get_timestamp());
+ 	pstore_ftrace_encode_cpu(&rec, raw_smp_processor_id());
+ 	psinfo->write(&record);
+ 
+@@ -74,10 +97,16 @@ static ssize_t pstore_ftrace_knob_write(struct file *f, const char __user *buf,
+ 		goto out;
+ 
+ 	if (on) {
++		/* Keep this for debug purposes */
++		pstore_ftrace_call((unsigned long) pstore_ftrace_knob_write,
++				   0x0000, &pstore_ftrace_ops, NULL);
++
+ 		ftrace_ops_set_global_filter(&pstore_ftrace_ops);
+ 		ret = register_ftrace_function(&pstore_ftrace_ops);
+ 	} else {
+ 		ret = unregister_ftrace_function(&pstore_ftrace_ops);
++		/* Reset ftrace buffers and update stored data, #TODO: rename? */
++		ramoops_update_stored_ftrace();
+ 	}
+ 
+ 	if (ret) {
+diff --git a/fs/pstore/internal.h b/fs/pstore/internal.h
+index 7fb219042f13..eb3021332573 100644
+--- a/fs/pstore/internal.h
++++ b/fs/pstore/internal.h
+@@ -46,6 +46,8 @@ extern int	pstore_mkfile(struct dentry *root,
+ extern void	pstore_record_init(struct pstore_record *record,
+ 				   struct pstore_info *psi);
+ 
++void ramoops_update_stored_ftrace(void);
++
+ /* Called during pstore init/exit. */
+ int __init	pstore_init_fs(void);
+ void __exit	pstore_exit_fs(void);
+diff --git a/fs/pstore/ram.c b/fs/pstore/ram.c
+index ca6d8a867285..b67b28f01ce1 100644
+--- a/fs/pstore/ram.c
++++ b/fs/pstore/ram.c
+@@ -878,6 +878,28 @@ static int ramoops_remove(struct platform_device *pdev)
+ 	return 0;
+ }
+ 
++void ramoops_update_stored_ftrace(void)
++{
++    int i;
++    struct ramoops_context *cxt = &oops_cxt;
++
++    pstore_put_backend_records(&cxt->pstore);
++
++    for (i = 0; i != cxt->max_ftrace_cnt; ++i) {
++        struct persistent_ram_zone *prz = cxt->fprzs[i];
++
++	if (!prz) {
++		printk("%s: prz has not found!\n", __func__);
++		continue;
++	}
++
++        persistent_ram_save_old(prz);
++	buffer_reset(prz);
++    }
++
++//    pstore_put_backend_records(&cxt->pstore);
++}
++
+ static const struct of_device_id dt_match[] = {
+ 	{ .compatible = "ramoops" },
+ 	{}
+diff --git a/fs/pstore/ram_core.c b/fs/pstore/ram_core.c
+index aa8e0b65ff1a..00d0c0f6486c 100644
+--- a/fs/pstore/ram_core.c
++++ b/fs/pstore/ram_core.c
+@@ -20,6 +20,8 @@
+ #include <linux/vmalloc.h>
+ #include <asm/page.h>
+ 
++#define SEL4_TRACEBUFFER (1)
++
+ /**
+  * struct persistent_ram_buffer - persistent circular RAM buffer
+  *
+@@ -298,6 +300,10 @@ void persistent_ram_save_old(struct persistent_ram_zone *prz)
+ 	if (!size)
+ 		return;
+ 
++	if (0 && prz->old_log) {
++		persistent_ram_free_old(prz);
++	}
++
+ 	if (!prz->old_log) {
+ 		persistent_ram_ecc_old(prz);
+ 		prz->old_log = kmalloc(size, GFP_KERNEL);
+@@ -324,21 +330,32 @@ int notrace persistent_ram_write(struct persistent_ram_zone *prz,
+ 		c = prz->buffer_size;
+ 	}
+ 
++#if SEL4_TRACEBUFFER
++	if ((buffer_size(prz) + c) >= prz->buffer_size)
++		goto exit;
++#endif
++
+ 	buffer_size_add(prz, c);
+ 
+ 	start = buffer_start_add(prz, c);
+ 
+ 	rem = prz->buffer_size - start;
+ 	if (unlikely(rem < c)) {
++#if SEL4_TRACEBUFFER
++		goto exit;
++#else
+ 		persistent_ram_update(prz, s, start, rem);
+ 		s += rem;
+ 		c -= rem;
+ 		start = 0;
++#endif
+ 	}
++
+ 	persistent_ram_update(prz, s, start, c);
+ 
+ 	persistent_ram_update_header_ecc(prz);
+ 
++exit:
+ 	return count;
+ }
+ 
+@@ -353,22 +370,32 @@ int notrace persistent_ram_write_user(struct persistent_ram_zone *prz,
+ 		c = prz->buffer_size;
+ 	}
+ 
++#if SEL4_TRACEBUFFER
++	if ((buffer_size(prz) + c) >= prz->buffer_size)
++		goto exit;
++#endif
++
+ 	buffer_size_add(prz, c);
+ 
+ 	start = buffer_start_add(prz, c);
+ 
+ 	rem = prz->buffer_size - start;
+ 	if (unlikely(rem < c)) {
++#if SEL4_TRACEBUFFER
++		goto exit;
++#else
+ 		ret = persistent_ram_update_user(prz, s, start, rem);
+ 		s += rem;
+ 		c -= rem;
+ 		start = 0;
++#endif
+ 	}
+ 	if (likely(!ret))
+ 		ret = persistent_ram_update_user(prz, s, start, c);
+ 
+ 	persistent_ram_update_header_ecc(prz);
+ 
++exit:
+ 	return unlikely(ret) ? ret : count;
+ }
+ 
+@@ -593,3 +620,18 @@ struct persistent_ram_zone *persistent_ram_new(phys_addr_t start, size_t size,
+ 	persistent_ram_free(prz);
+ 	return ERR_PTR(ret);
+ }
++
++/* reset buffer start pointer and size */
++void buffer_reset(struct persistent_ram_zone *prz)
++{
++	unsigned long flags = 0;
++
++	if (!(prz->flags & PRZ_FLAG_NO_LOCK))
++		raw_spin_lock_irqsave(&prz->buffer_lock, flags);
++
++	atomic_set(&prz->buffer->size,  0);
++	atomic_set(&prz->buffer->start, 0);
++
++	if (!(prz->flags & PRZ_FLAG_NO_LOCK))
++		raw_spin_unlock_irqrestore(&prz->buffer_lock, flags);
++}
+diff --git a/include/linux/pstore_ram.h b/include/linux/pstore_ram.h
+index 9f16afec7290..46b48c28b30e 100644
+--- a/include/linux/pstore_ram.h
++++ b/include/linux/pstore_ram.h
+@@ -99,6 +99,11 @@ struct persistent_ram_zone {
+ 	size_t old_log_size;
+ };
+ 
++/* SIC */
++void buffer_reset(struct persistent_ram_zone *prz);
++void persistent_ram_save_old(struct persistent_ram_zone *prz);
++/* SIC */
++
+ struct persistent_ram_zone *persistent_ram_new(phys_addr_t start, size_t size,
+ 			u32 sig, struct persistent_ram_ecc_info *ecc_info,
+ 			unsigned int memtype, u32 flags, char *label);
+-- 
+2.34.1
+

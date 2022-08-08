@@ -17,6 +17,13 @@ IMAGE_FEATURES += " \
     benchmark \
     "
 
+IMAGE_INSTALL += " \
+    trace-cmd \
+    sel4-extract \
+    sel4-ftrace-merge \
+    sel4-collect-traces \
+    "
+
 export IMAGE_BASENAME = "vm-image-driver"
 
 export VM_IMAGE_HOSTNAME = "driver-vm"

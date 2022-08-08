@@ -6,6 +6,7 @@ inherit core-image
 
 FEATURE_PACKAGES_qemu-virtio = "\
     kernel-module-connection \
+    kernel-module-sel4-tracebuffer \
     qemu \
     qemu-sel4-helpers \
     qemu-sel4-helpers-gui \
