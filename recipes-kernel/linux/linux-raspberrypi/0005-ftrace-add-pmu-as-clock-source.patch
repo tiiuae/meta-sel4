@@ -1,0 +1,30 @@
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index e4f154119e52..91015976f9c9 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -1529,6 +1529,17 @@ static const char *trace_options[] = {
+ 	NULL
+ };
+ 
++#define read_sysreg(r) ({                                               \
++	u64 __val;                                                      \
++	asm volatile("mrs %0, " __stringify(r) : "=r" (__val));         \
++	__val;                                                          \
++})
++
++u64 notrace trace_pmu_clock(void)
++{
++	return read_sysreg(pmccntr_el0);
++}
++
+ static struct {
+ 	u64 (*func)(void);
+ 	const char *name;
+@@ -1542,6 +1553,7 @@ static struct {
+ 	{ ktime_get_mono_fast_ns,	"mono",		1 },
+ 	{ ktime_get_raw_fast_ns,	"mono_raw",	1 },
+ 	{ ktime_get_boot_fast_ns,	"boot",		1 },
++	{ trace_pmu_clock,              "pmu_clock",    0 },
+ 	ARCH_TRACE_CLOCKS
+ };
+ 
