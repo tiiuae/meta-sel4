@@ -11,7 +11,7 @@ fi
 
 # guest memory size in megabytes
 # TODO: autoprobe from uio
-GUEST_MEMSZ=${GUEST_MEMSZ:-128}
+GUEST_MEMSZ=${GUEST_MEMSZ:-256}
 
 # rootfs for guest
 GUEST_IMG="${GUEST_IMG:-/var/lib/virt/images/user-vm.qcow2}"
