@@ -47,7 +47,4 @@ export GUEST_GUI_ARGS="${GUEST_GUI_ARGS:-\
 	$GUEST_KBD_DEV \
 }"
 
-# FIXME: Problems enabling 256M :(
-#export GUEST_MEMSZ="${GUEST_MEMSZ:-256}"
-
 exec qemu-sel4
