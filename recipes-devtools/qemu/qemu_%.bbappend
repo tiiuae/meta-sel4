@@ -1,8 +1,11 @@
 QEMU_TARGETS = "aarch64"
 
-PACKAGECONFIG[sel4] = "--enable-sel4,--disable-sel4,,"
+QEMU_SEL4_DEPS = ""
+QEMU_SEL4_DEPS:class-target = "kernel-module-sel4-virt"
+DEPENDS += "${QEMU_SEL4_DEPS}"
 
-PACKAGECONFIG = " \
+PACKAGECONFIG[sel4] = "--enable-sel4,--disable-sel4,,"
+PACKAGECONFIG:class-target = " \
     fdt \
     pie \
     sel4 \
