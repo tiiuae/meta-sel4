@@ -21,9 +21,7 @@ mkdir -p "$GUEST_SHARED"
 
 GUEST_GUI_ARGS="${GUEST_GUI_ARGS:--vga none -display none}"
 
-# CAmkES dataports
-modprobe uio
-modprobe connection
+modprobe sel4_virt
 
 ulimit -c unlimited
 
@@ -33,9 +31,6 @@ exec /usr/bin/qemu-system-aarch64 \
 	`# do not touch these` \
 	--accel sel4 \
 	-M virt \
-	`# use CAmkES dataport for the system memory` \
-	-object memory-backend-file,id=virt.ram,size=${GUEST_MEMSZ}M,mem-path=/dev/uio1,offset=4096,share=on \
-	-machine memory-backend=virt.ram \
 	-m ${GUEST_MEMSZ}m \
 	`# virtio-blk device for guest rootfs` \
 	-device virtio-blk-pci,drive=drive0,id=virtblk0 \
