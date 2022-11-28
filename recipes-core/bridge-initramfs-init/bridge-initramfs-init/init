@@ -1,0 +1,35 @@
+#! /bin/sh
+
+mkdir /proc
+mount -t proc none /proc
+mount -t devtmpfs none /dev
+modprobe tun
+
+brctl addbr br0
+ip addr flush dev eth0
+brctl addif br0 eth0
+tunctl -t tap0 -u 0
+brctl addif br0 tap0
+
+ifconfig eth0 up
+ifconfig tap0 up
+ifconfig br0 up
+
+cat > /etc/udhcpc.d/60nfsroot <<EOF
+#! /bin/sh
+env > /udhcpc.env
+EOF
+chmod 755 /etc/udhcpc.d/60nfsroot
+udhcpc -i br0 -O rootpath
+
+eval `grep rootpath= /udhcpc.env`
+
+mkdir /newroot
+nfsopts=`echo ${rootpath} | cut -d, -f2-`
+nfssource=`echo ${rootpath} | cut -d, -f1`
+
+mount -t nfs -o ${nfsopts} ${nfssource} /newroot
+
+# TODO: how about dhcpc's files?
+
+exec switch_root /newroot /sbin/init
