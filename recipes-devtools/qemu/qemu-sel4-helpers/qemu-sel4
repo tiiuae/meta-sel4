@@ -54,4 +54,6 @@ exec /usr/bin/qemu-system-aarch64 \
 	`# gui options` \
 	${GUEST_GUI_ARGS} \
 	-serial none \
+	-netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
+	-device virtio-net-pci,netdev=net0 \
 	`# that's it!`
