@@ -25,3 +25,11 @@ VM_GUEST_IMAGES ?= " \
     vm-image-user \
     "
 VM_GUEST_IMAGE_vm-image-user = "user-vm.qcow2"
+
+remove_eth0_autoconfig() {
+    sed -i -e '/eth0/d' ${IMAGE_ROOTFS}${sysconfdir}/network/interfaces
+}
+
+ROOTFS_POSTPROCESS_COMMAND:append = " \
+    remove_eth0_autoconfig; \
+"
