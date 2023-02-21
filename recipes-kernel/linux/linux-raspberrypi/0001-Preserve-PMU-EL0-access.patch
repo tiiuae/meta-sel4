@@ -1,4 +1,4 @@
-From 0b5cc06eb2ba310467e7488111fbc35a23247573 Mon Sep 17 00:00:00 2001
+From adb757e0f900f3f134caed80727a6abfdb6f02e4 Mon Sep 17 00:00:00 2001
 From: Hannu Lyytinen <hannux@ssrc.tii.ae>
 Date: Thu, 19 May 2022 15:34:14 +0300
 Subject: [PATCH] Preserve PMU EL0 access
@@ -9,10 +9,10 @@ Signed-off-by: Hannu Lyytinen <hannux@ssrc.tii.ae>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/arm64/include/asm/assembler.h b/arch/arm64/include/asm/assembler.h
-index ddbe6bf00e33..6f4880acd0a9 100644
+index 448a575db8e8..152950b19de0 100644
 --- a/arch/arm64/include/asm/assembler.h
 +++ b/arch/arm64/include/asm/assembler.h
-@@ -429,7 +429,7 @@ USER(\label, ic	ivau, \tmp2)			// invalidate I line PoU
+@@ -482,7 +482,7 @@ alternative_endif
  	sbfx	\tmpreg, \tmpreg, #ID_AA64DFR0_PMUVER_SHIFT, #4
  	cmp	\tmpreg, #1			// Skip if no PMU present
  	b.lt	9000f

@@ -1,8 +1,18 @@
+From ee453bbc5f7ff4d6d48e390b486a343b36468b23 Mon Sep 17 00:00:00 2001
+From: Hannu Lyytinen <hannux@ssrc.tii.ae>
+Date: Tue, 21 Feb 2023 15:50:09 +0200
+Subject: [PATCH] XHCI timeout workaround
+
+Signed-off-by: Hannu Lyytinen <hannux@ssrc.tii.ae>
+---
+ drivers/usb/host/xhci.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
 diff --git a/drivers/usb/host/xhci.c b/drivers/usb/host/xhci.c
-index 975e24e94e91..81bcc5ef8977 100644
+index b72d408349a7..59f170ffe3bd 100644
 --- a/drivers/usb/host/xhci.c
 +++ b/drivers/usb/host/xhci.c
-@@ -132,7 +132,9 @@ int xhci_start(struct xhci_hcd *xhci)
+@@ -131,7 +131,9 @@ int xhci_start(struct xhci_hcd *xhci)
  {
  	u32 temp;
  	int ret;
@@ -12,7 +22,7 @@ index 975e24e94e91..81bcc5ef8977 100644
  	temp = readl(&xhci->op_regs->command);
  	temp |= (CMD_RUN);
  	xhci_dbg_trace(xhci, trace_xhci_dbg_init, "// Turn on HC, cmd = 0x%x.",
-@@ -149,9 +151,8 @@ int xhci_start(struct xhci_hcd *xhci)
+@@ -148,9 +150,8 @@ int xhci_start(struct xhci_hcd *xhci)
  		xhci_err(xhci, "Host took too long to start, "
  				"waited %u microseconds.\n",
  				XHCI_MAX_HALT_USEC);

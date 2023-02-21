@@ -1,8 +1,18 @@
+From f4f0ca05930277253a95c91fbbbd79270f624176 Mon Sep 17 00:00:00 2001
+From: Hannu Lyytinen <hannux@ssrc.tii.ae>
+Date: Tue, 21 Feb 2023 15:51:02 +0200
+Subject: [PATCH] Input event workaround
+
+Signed-off-by: Hannu Lyytinen <hannux@ssrc.tii.ae>
+---
+ drivers/input/input.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
 diff --git a/drivers/input/input.c b/drivers/input/input.c
-index 3cfd2c18eebd..873a75814a37 100644
+index ba246fabc6c1..cbbf3a7b39f2 100644
 --- a/drivers/input/input.c
 +++ b/drivers/input/input.c
-@@ -372,8 +372,14 @@ static void input_handle_event(struct input_dev *dev,
+@@ -388,8 +388,14 @@ static void input_handle_event(struct input_dev *dev,
  	if (disposition != INPUT_IGNORE_EVENT && type != EV_SYN)
  		add_input_randomness(type, code, value);
  

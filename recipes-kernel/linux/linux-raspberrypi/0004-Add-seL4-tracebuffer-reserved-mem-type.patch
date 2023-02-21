@@ -1,0 +1,22 @@
+From 2bdcfdb5d028fa711a6c4cb38a3d679faede739d Mon Sep 17 00:00:00 2001
+From: Hannu Lyytinen <hannux@ssrc.tii.ae>
+Date: Tue, 21 Feb 2023 15:52:10 +0200
+Subject: [PATCH] Add seL4 tracebuffer reserved mem type
+
+Signed-off-by: Hannu Lyytinen <hannux@ssrc.tii.ae>
+---
+ drivers/of/platform.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/of/platform.c b/drivers/of/platform.c
+index 74afbb7a4f5e..3ca0785ef7e8 100644
+--- a/drivers/of/platform.c
++++ b/drivers/of/platform.c
+@@ -510,6 +510,7 @@ static const struct of_device_id reserved_mem_matches[] = {
+ 	{ .compatible = "qcom,rmtfs-mem" },
+ 	{ .compatible = "qcom,cmd-db" },
+ 	{ .compatible = "ramoops" },
++	{ .compatible = "sel4_tracebuffer" },
+ 	{ .compatible = "nvmem-rmem" },
+ 	{}
+ };
