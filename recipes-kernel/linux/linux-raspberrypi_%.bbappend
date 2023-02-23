@@ -9,4 +9,5 @@ SRC_URI += " \
     file://virtio-input.cfg \
     file://v3d.cfg \
     file://pstore.cfg \
+    file://swiotlb.cfg \
 "
