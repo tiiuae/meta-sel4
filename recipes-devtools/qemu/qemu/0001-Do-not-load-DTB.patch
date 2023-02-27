@@ -1,0 +1,25 @@
+From b0f307d01849c04a5250beee1b28e9852ae827ff Mon Sep 17 00:00:00 2001
+From: Hannu Lyytinen <hannux@ssrc.tii.ae>
+Date: Tue, 28 Feb 2023 01:38:38 +0200
+Subject: [PATCH] Do not load DTB
+
+This would break SWIOTLB boot.
+
+Signed-off-by: Hannu Lyytinen <hannux@ssrc.tii.ae>
+---
+ hw/arm/boot.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/hw/arm/boot.c b/hw/arm/boot.c
+index ada2717f76..985629f10e 100644
+--- a/hw/arm/boot.c
++++ b/hw/arm/boot.c
+@@ -540,6 +540,8 @@ int arm_load_dtb(hwaddr addr, const struct arm_boot_info *binfo,
+     char **node_path;
+     Error *err = NULL;
+ 
++    return 0;
++
+     if (binfo->dtb_filename) {
+         char *filename;
+         filename = qemu_find_file(QEMU_FILE_TYPE_BIOS, binfo->dtb_filename);
