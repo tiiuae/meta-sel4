@@ -7,6 +7,10 @@ inherit image-hostname vm-image-features vm-guest-images-install
 
 SUMMARY = "Driver VM"
 
+IMAGE_FSTYPES += " \
+    rpi-sdimg \
+    "
+
 IMAGE_INSTALL:append = " \
     ${@bb.utils.contains("MACHINE_FEATURES", "pci", "pciutils", "", d)} \
     ${@bb.utils.contains("MACHINE_FEATURES", "usbhost", "usbutils", "", d)} \
