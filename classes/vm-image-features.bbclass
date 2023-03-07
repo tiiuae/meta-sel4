@@ -15,6 +15,8 @@ FEATURE_PACKAGES_qemu-virtio = "\
 
 FEATURE_PACKAGES_benchmark = " \
     screen \
+    fio \
+    e2fsprogs \
     tii-benchmark \
 "
 
