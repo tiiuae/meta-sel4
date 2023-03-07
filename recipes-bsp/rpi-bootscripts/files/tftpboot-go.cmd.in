@@ -1,0 +1,1 @@
+if tftpboot ${loadaddr} image.rpi4; then go ${loadaddr}; fi

@@ -7,6 +7,10 @@ inherit image-hostname vm-image-features vm-guest-images-install
 
 SUMMARY = "Driver VM"
 
+DEPENDS += " \
+    bootscripts \
+    "
+
 IMAGE_FSTYPES += " \
     rpi-sdimg \
     "
