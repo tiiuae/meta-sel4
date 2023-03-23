@@ -17,5 +17,5 @@ PACKAGECONFIG:class-target = " \
 
 SRC_URI:remove = "https://download.qemu.org/${BPN}-${PV}.tar.xz"
 
-SRC_URI += "gitsm://git@github.com/tiiuae/qemu-sel4-virtio.git;protocol=ssh;destsuffix=${BPN}-${PV};branch=tii/main"
+SRC_URI += "gitsm://git@github.com/tiiuae/qemu-sel4-virtio.git;protocol=ssh;destsuffix=${BPN}-${PV};branch=improve_large_page"
 SRCREV = "${AUTOREV}"
