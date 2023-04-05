@@ -5,7 +5,7 @@ SECTION = "kernel"
 LICENSE = "BSD-2-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=d9916c659cd59cc3dea0299cd895bf0e"
 
-SRC_URI = "git://git@github.com/tiiuae/sel4-linux-kernel-support.git;protocol=ssh;branch=main"
+SRC_URI = "git://github.com/tiiuae/sel4-linux-kernel-support.git;protocol=https;branch=main"
 
 SRCREV = "${AUTOREV}"
 
