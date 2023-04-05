@@ -9,7 +9,7 @@ DEPENDS += " kernel-sel4-support "
 
 inherit module
 
-SRC_URI = "git://git@github.com/tiiuae/kmod-sel4-tracebuffer.git;protocol=ssh;branch=main"
+SRC_URI = "git://github.com/tiiuae/kmod-sel4-tracebuffer.git;protocol=https;branch=main"
 SRCREV = "${AUTOREV}"
 
 S = "${WORKDIR}/git"
