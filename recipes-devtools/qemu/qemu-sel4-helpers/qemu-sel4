@@ -10,6 +10,9 @@ EOF
 fi
 
 # guest memory size in megabytes
+if grep sel4_use_swiotlb /proc/cmdline 1>/dev/null 2>&1; then
+	GUEST_MEMSZ=8
+fi
 # TODO: autoprobe from uio
 GUEST_MEMSZ=${GUEST_MEMSZ:-256}
 
