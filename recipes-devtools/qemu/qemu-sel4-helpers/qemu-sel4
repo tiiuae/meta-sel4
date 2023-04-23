@@ -9,10 +9,6 @@ EOF
     exit 0
 fi
 
-# guest memory size in megabytes
-# TODO: autoprobe from uio
-GUEST_MEMSZ=${GUEST_MEMSZ:-256}
-
 # rootfs for guest
 GUEST_IMG="${GUEST_IMG:-/var/lib/virt/images/user-vm.qcow2}"
 # directory shared to guest
@@ -24,7 +20,22 @@ GUEST_GUI_ARGS="${GUEST_GUI_ARGS:--vga none -display none}"
 QEMU_APPEND_BOOTARGS=""
 QEMU_EXTRA_ARGS="${GUEST_GUI_ARGS}"
 
-modprobe sel4_virt
+# Decode args like 'uservm=1,0x48000000,0x10000000,0x60000000,0x10000000'
+# TODO: use device tree
+GUEST_MEMSZ=`while read -d' ' p; do
+    echo $p | grep '^uservm=1,' | cut -f3 -d, | xargs -Isz printf "%d" sz
+done < /proc/cmdline`
+
+if test -n "${GUEST_MEMSZ}"; then
+    # using seL4
+    GUEST_MEMSZ=`expr ${GUEST_MEMSZ} / 1048576`
+    ACCEL=sel4
+fi
+GUEST_MEMSZ=${GUEST_MEMSZ:-256}
+
+if test "x${ACCEL}" = "xsel4"; then
+    modprobe sel4_virt
+fi
 
 ulimit -c unlimited
 
@@ -32,7 +43,7 @@ exec /usr/bin/qemu-system-aarch64 \
     `# minicom already uses ^A, change monitor escape to ^T` \
     -echr 0x14 \
     `# do not touch these` \
-    --accel sel4 \
+    --accel ${ACCEL} \
     -M virt \
     -m ${GUEST_MEMSZ}m \
     `# virtio-blk device for guest rootfs` \
