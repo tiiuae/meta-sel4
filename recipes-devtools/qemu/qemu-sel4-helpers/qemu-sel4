@@ -1,12 +1,12 @@
 #!/bin/sh
 
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-	cat << EOF
+    cat << EOF
 Run QEMU as virtio device provider for seL4 VMs.
 
 usage: $0 [-h|--help]
 EOF
-	exit 0
+    exit 0
 fi
 
 # guest memory size in megabytes
@@ -26,29 +26,29 @@ modprobe sel4_virt
 ulimit -c unlimited
 
 exec /usr/bin/qemu-system-aarch64 \
-	`# minicom already uses ^A, change monitor escape to ^T` \
-	-echr 0x14 \
-	`# do not touch these` \
-	--accel sel4 \
-	-M virt \
-	-m ${GUEST_MEMSZ}m \
-	`# virtio-blk device for guest rootfs` \
-	-device virtio-blk-pci,drive=drive0,id=virtblk0 \
-	-drive format=qcow2,file=${GUEST_IMG},if=none,id=drive0 \
-	`# share directory to guest over 9P` \
-	-virtfs local,path=${GUEST_SHARED},mount_tag=shared,security_model=mapped-xattr \
-	`# debug messages, use monitor to read them` \
-	-chardev ringbuf,id=debug,size=64K \
-	`# enable multiplexer on stdio to have both guest and monitor` \
-	-chardev stdio,id=mon,mux=on,signal=off \
-	`# enable monitor` \
-	-mon chardev=mon,mode=readline \
-	`# virtio-console` \
-	-device virtio-serial-pci \
-	-device virtconsole,chardev=mon,id=console0,name=qemu.uservm \
-	`# gui options` \
-	${GUEST_GUI_ARGS} \
-	-serial none \
-	-netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
-	-device virtio-net-pci,netdev=net0 \
-	`# that's it!`
+    `# minicom already uses ^A, change monitor escape to ^T` \
+    -echr 0x14 \
+    `# do not touch these` \
+    --accel sel4 \
+    -M virt \
+    -m ${GUEST_MEMSZ}m \
+    `# virtio-blk device for guest rootfs` \
+    -device virtio-blk-pci,drive=drive0,id=virtblk0 \
+    -drive format=qcow2,file=${GUEST_IMG},if=none,id=drive0 \
+    `# share directory to guest over 9P` \
+    -virtfs local,path=${GUEST_SHARED},mount_tag=shared,security_model=mapped-xattr \
+    `# debug messages, use monitor to read them` \
+    -chardev ringbuf,id=debug,size=64K \
+    `# enable multiplexer on stdio to have both guest and monitor` \
+    -chardev stdio,id=mon,mux=on,signal=off \
+    `# enable monitor` \
+    -mon chardev=mon,mode=readline \
+    `# virtio-console` \
+    -device virtio-serial-pci \
+    -device virtconsole,chardev=mon,id=console0,name=qemu.uservm \
+    `# gui options` \
+    ${GUEST_GUI_ARGS} \
+    -serial none \
+    -netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
+    -device virtio-net-pci,netdev=net0 \
+    `# that's it!`
