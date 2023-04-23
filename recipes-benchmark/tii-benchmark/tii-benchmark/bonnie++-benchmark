@@ -1,5 +1,0 @@
-#! /bin/sh
-
-while :; do
-  /usr/sbin/bonnie++ -u root
-done
