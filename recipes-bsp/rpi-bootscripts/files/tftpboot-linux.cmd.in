@@ -1,0 +1,18 @@
+setenv kernel_addr ${loadaddr}
+tftpboot ${loadaddr} image.rpi4
+setexpr loadaddr ${loadaddr} + ${filesize}
+setexpr loadaddr ${loadaddr} + 0xffffff
+setexpr loadaddr ${loadaddr} / 0x1000000
+setexpr loadaddr ${loadaddr} * 0x1000000
+
+setenv initrd_addr ${loadaddr}
+tftpboot ${loadaddr} uRamdisk.rpi4
+setexpr loadaddr ${loadaddr} + ${filesize}
+setexpr loadaddr ${loadaddr} + 0xffffff
+setexpr loadaddr ${loadaddr} / 0x1000000
+setexpr loadaddr ${loadaddr} * 0x1000000
+
+setenv dtb_addr ${loadaddr}
+tftpboot ${loadaddr} dtb.rpi4
+
+booti ${kernel_addr} ${initrd_addr} ${dtb_addr}
