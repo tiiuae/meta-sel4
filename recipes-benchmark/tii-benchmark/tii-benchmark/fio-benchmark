@@ -1,0 +1,18 @@
+#! /bin/sh
+
+set -e
+
+BLOCKSIZES="4096 16384 65536 262144 1048576 2097152 4194304"
+
+for bs in ${BLOCKSIZES}; do
+    fio \
+        --name=random-write \
+        --ioengine=posixaio \
+        --rw=randwrite \
+        --bs=${bs} \
+        --size=64M \
+        --numjobs=1 \
+        --runtime=60 \
+        --time_based \
+        --end_fsync=1
+done | tee /tmp/fio.txt
