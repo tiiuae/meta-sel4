@@ -1,6 +1,8 @@
 SUMMARY = "Bridged Ethernet NFS root initramfs"
 DESCRIPTION = "This image provides bridged Ethernet before NFS root."
 
+INITRAMFS_FSTYPES += "cpio.gz.u-boot"
+
 # Some BSPs use IMAGE_FSTYPES_<machine override> which would override
 # an assignment to IMAGE_FSTYPES so we need anon python
 python () {

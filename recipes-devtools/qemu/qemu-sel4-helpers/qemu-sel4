@@ -35,6 +35,11 @@ GUEST_MEMSZ=${GUEST_MEMSZ:-256}
 
 if test "x${ACCEL}" = "xsel4"; then
     modprobe sel4_virt
+else
+    # using something else, let's default to KVM
+    QEMU_APPEND_BOOTARGS="${QEMU_APPEND_BOOTARGS} console=hvc0 root=/dev/vda2"
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -kernel /boot/Image -cpu host"
+    ACCEL=kvm
 fi
 
 ulimit -c unlimited

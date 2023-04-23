@@ -8,6 +8,7 @@ PACKAGECONFIG[sel4] = "--enable-sel4,--disable-sel4,,"
 PACKAGECONFIG:class-target = " \
     fdt \
     pie \
+    kvm \
     sel4 \
     virtfs \
     sdl \

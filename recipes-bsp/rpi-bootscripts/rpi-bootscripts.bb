@@ -12,6 +12,7 @@ INHIBIT_DEFAULT_DEPS = "1"
 SRC_URI = " \
     file://tftpboot-bootefi.cmd.in \
     file://tftpboot-go.cmd.in \
+    file://tftpboot-linux.cmd.in \
     "
 
 do_compile() {
