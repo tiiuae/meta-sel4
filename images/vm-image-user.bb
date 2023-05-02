@@ -7,7 +7,7 @@ inherit image-hostname vm-image-features vm-guest-image
 
 SUMMARY = "User VM"
 
-IMAGE_ROOTFS_EXTRA_SPACE = "327680"
+IMAGE_ROOTFS_EXTRA_SPACE = "131072"
 
 IMAGE_FEATURES += " \
     benchmark \
