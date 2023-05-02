@@ -21,6 +21,9 @@ mkdir -p "$GUEST_SHARED"
 
 GUEST_GUI_ARGS="${GUEST_GUI_ARGS:--vga none -display none}"
 
+QEMU_APPEND_BOOTARGS=""
+QEMU_EXTRA_ARGS="${GUEST_GUI_ARGS}"
+
 modprobe sel4_virt
 
 ulimit -c unlimited
@@ -46,9 +49,12 @@ exec /usr/bin/qemu-system-aarch64 \
     `# virtio-console` \
     -device virtio-serial-pci \
     -device virtconsole,chardev=mon,id=console0,name=qemu.uservm \
-    `# gui options` \
-    ${GUEST_GUI_ARGS} \
-    -serial none \
+    `# TUN/TAP networking` \
     -netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
     -device virtio-net-pci,netdev=net0 \
+    `# no serial, emulating pl011 @ 0x09000000 in seL4 code` \
+    -serial none \
+    `# extra options` \
+    ${QEMU_EXTRA_ARGS} \
+    ${QEMU_APPEND_BOOTARGS:+-append "${QEMU_APPEND_BOOTARGS}"} \
     `# that's it!`
