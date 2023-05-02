@@ -13,6 +13,7 @@ SRC_URI += " \
 
 RDEPENDS:${PN} += " \
     bonnie++ \
+    e2fsprogs-mke2fs \
     iperf3 \
 "
 

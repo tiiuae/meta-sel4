@@ -44,6 +44,30 @@ fi
 
 ulimit -c unlimited
 
+ROOTFS_STORAGE=${ROOTFS_STORAGE:-tmpfs}
+case "${ROOTFS_STORAGE}" in
+    tmpfs)
+        cp ${GUEST_IMG} /tmp
+        GUEST_IMG=/tmp/`basename ${GUEST_IMG}`
+        echo "Guest rootfs: using volatile rootfs cached in host tmpfs" 1>&2
+        ;;
+    extra_ramdisk)
+        qemu-img create -f raw /tmp/ramdisk.raw 128M
+        mke2fs /tmp/ramdisk.raw
+        QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device virtio-blk-pci,drive=drive1,id=virtblk1"
+        QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -drive format=raw,file=/tmp/ramdisk.raw,if=none,id=drive1"
+        echo "Guest rootfs: using host permanent storage at ${GUEST_IMG}" 1>&2
+        echo "Providing additional volatile 128 MB /dev/vdb to guest" 1>&2
+        ;;
+    host)
+        echo "Guest rootfs: using host permanent storage at ${GUEST_IMG}" 1>&2
+        ;;
+    *)
+        echo "Unknown storage class for guest rootfs" 1>&2
+        exit 1
+        ;;
+esac
+
 exec /usr/bin/qemu-system-aarch64 \
     `# minicom already uses ^A, change monitor escape to ^T` \
     -echr 0x14 \
