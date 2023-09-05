@@ -9,6 +9,13 @@ EOF
     exit 0
 fi
 
+if test "x${VMID}" = "x"; then
+    VMID=1
+    echo "VMID not specified, defaulting to ${VMID}"
+fi
+
+export VMID
+
 # rootfs for guest
 GUEST_IMG="${GUEST_IMG:-/var/lib/virt/images/user-vm.qcow2}"
 # directory shared to guest
@@ -16,14 +23,31 @@ GUEST_SHARED="${GUEST_SHARED:-$HOME/.local/share/virt/shared}"
 mkdir -p "$GUEST_SHARED"
 
 GUEST_GUI_ARGS="${GUEST_GUI_ARGS:--vga none -display none}"
+GUEST_NET_ARGS=""
+
+case "${VMID}" in
+    1)
+        GUEST_NET_ARGS="${GUEST_NET_ARGS} -netdev tap,id=net0,ifname=tap0,script=no,downscript=no"
+        GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net0"
+        echo "Guest using tap0 for network"
+        ;;
+    2)
+        GUEST_NET_ARGS="${GUEST_NET_ARGS} -netdev tap,id=net1,ifname=tap1,script=no,downscript=no"
+        GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net1"
+        echo "Guest using tap1 for network"
+        ;;
+    *)
+        echo "Guest networking disabled"
+        ;;
+esac
 
 QEMU_APPEND_BOOTARGS=""
-QEMU_EXTRA_ARGS="${GUEST_GUI_ARGS}"
+QEMU_EXTRA_ARGS="${GUEST_GUI_ARGS} ${GUEST_NET_ARGS}"
 
 # Decode args like 'uservm=1,0x48000000,0x10000000,0x60000000,0x10000000'
 # TODO: use device tree
 GUEST_MEMSZ=`while read -d' ' p; do
-    echo $p | grep '^uservm=1,' | cut -f3 -d, | xargs -Isz printf "%d" sz
+    echo $p | grep '^uservm='${VMID}',' | cut -f3 -d, | xargs -Isz printf "%d" sz
 done < /proc/cmdline`
 
 if test -n "${GUEST_MEMSZ}"; then
@@ -44,18 +68,21 @@ fi
 
 ulimit -c unlimited
 
+VMTMPDIR=/tmp/vm${VMID}
+mkdir -p ${VMTMPDIR}
+
 ROOTFS_STORAGE=${ROOTFS_STORAGE:-tmpfs}
 case "${ROOTFS_STORAGE}" in
     tmpfs)
-        cp ${GUEST_IMG} /tmp
-        GUEST_IMG=/tmp/`basename ${GUEST_IMG}`
+        cp ${GUEST_IMG} ${VMTMPDIR}
+        GUEST_IMG=${VMTMPDIR}/`basename ${GUEST_IMG}`
         echo "Guest rootfs: using volatile rootfs cached in host tmpfs" 1>&2
         ;;
     extra_ramdisk)
-        qemu-img create -f raw /tmp/ramdisk.raw 128M
-        mke2fs /tmp/ramdisk.raw
+        qemu-img create -f raw ${VMTMPDIR}/ramdisk.raw 128M
+        mke2fs ${VMTMPDIR}/ramdisk.raw
         QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device virtio-blk-pci,drive=drive1,id=virtblk1"
-        QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -drive format=raw,file=/tmp/ramdisk.raw,if=none,id=drive1"
+        QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -drive format=raw,file="${VMTMPDIR}"/ramdisk.raw,if=none,id=drive1"
         echo "Guest rootfs: using host permanent storage at ${GUEST_IMG}" 1>&2
         echo "Providing additional volatile 128 MB /dev/vdb to guest" 1>&2
         ;;
@@ -89,9 +116,6 @@ exec /usr/bin/qemu-system-aarch64 \
     `# virtio-console` \
     -device virtio-serial-pci \
     -device virtconsole,chardev=mon,id=console0,name=qemu.uservm \
-    `# TUN/TAP networking` \
-    -netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
-    -device virtio-net-pci,netdev=net0 \
     `# no serial, emulating pl011 @ 0x09000000 in seL4 code` \
     -serial none \
     `# extra options` \

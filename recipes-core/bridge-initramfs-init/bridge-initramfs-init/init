@@ -9,10 +9,13 @@ brctl addbr br0
 ip addr flush dev eth0
 brctl addif br0 eth0
 tunctl -t tap0 -u 0
+tunctl -t tap1 -u 0
 brctl addif br0 tap0
+brctl addif br0 tap1
 
 ifconfig eth0 up
 ifconfig tap0 up
+ifconfig tap1 up
 ifconfig br0 up
 
 cat > /etc/udhcpc.d/60nfsroot <<EOF
