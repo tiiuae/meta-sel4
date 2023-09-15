@@ -11,6 +11,9 @@ FEATURE_PACKAGES_qemu-virtio = "\
     qemu-sel4-helpers \
     qemu-sel4-helpers-gui \
     screen \
+    kernel-module-vhost \
+    kernel-module-vhost-net \
+    kernel-module-tap \
 "
 
 FEATURE_PACKAGES_benchmark = " \
