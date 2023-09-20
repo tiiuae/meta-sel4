@@ -28,12 +28,12 @@ GUEST_NET_ARGS=""
 case "${VMID}" in
     1)
         GUEST_NET_ARGS="${GUEST_NET_ARGS} -netdev tap,id=net0,ifname=tap0,script=no,downscript=no"
-        GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net0"
+        GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net0,mac=02:ca:fe:f0:0d:01"
         echo "Guest using tap0 for network"
         ;;
     2)
         GUEST_NET_ARGS="${GUEST_NET_ARGS} -netdev tap,id=net1,ifname=tap1,script=no,downscript=no"
-        GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net1"
+        GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net1,mac=02:ca:fe:f0:0d:02"
         echo "Guest using tap1 for network"
         ;;
     *)
