@@ -10,6 +10,7 @@ SUMMARY = "User VM"
 IMAGE_ROOTFS_EXTRA_SPACE = "131072"
 
 IMAGE_FEATURES += " \
+    virtio-device \
     benchmark \
     "
 

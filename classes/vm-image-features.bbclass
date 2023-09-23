@@ -4,7 +4,7 @@
 
 inherit core-image
 
-FEATURE_PACKAGES_qemu-virtio = "\
+FEATURE_PACKAGES_virtio-device = "\
     kernel-module-sel4-virt \
     kernel-module-sel4-tracebuffer \
     qemu \

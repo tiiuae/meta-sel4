@@ -1,0 +1,6 @@
+startup_message off
+
+defscrollback 5000
+
+screen -t vm0 /bin/sh
+screen -t vm1 /usr/bin/qemu-sel4 --console --net=tap0 --id 1 --block /var/lib/virt/images/user-vm.qcow2

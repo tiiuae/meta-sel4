@@ -21,7 +21,7 @@ IMAGE_INSTALL:append = " \
     "
 
 IMAGE_FEATURES += " \
-    qemu-virtio \
+    virtio-device \
     benchmark \
     "
 

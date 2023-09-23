@@ -6,8 +6,8 @@ SRC_URI += " \
     file://fio-benchmark \
     file://iperf3-benchmark \
     file://console-stress-test \
-    file://screenrc-uservm \
-    file://screenrc-drivervm \
+    file://screenrc-vm1 \
+    file://screenrc-vm0 \
 "
 
 RDEPENDS:${PN} += " \
@@ -23,8 +23,8 @@ do_install:append() {
     install -m 0755 ${WORKDIR}/console-stress-test ${D}${bindir}
 
     install -d ${D}/home/root
-    install -m 0755 ${WORKDIR}/screenrc-uservm ${D}/home/root
-    install -m 0755 ${WORKDIR}/screenrc-drivervm ${D}/home/root
+    install -m 0755 ${WORKDIR}/screenrc-vm1 ${D}/home/root
+    install -m 0755 ${WORKDIR}/screenrc-vm0 ${D}/home/root
 }
 
 FILES:${PN} = "\
