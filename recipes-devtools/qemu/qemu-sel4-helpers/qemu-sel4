@@ -1,48 +1,111 @@
 #!/bin/sh
 
-if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+set -e
+
+# NOTE: GNU getopt required on FreeBSD and Mac OS X
+TEMP=$(getopt -o B:b:chi:n:r:s: --long cachedblock:,block:,console,help,id:,net:,ramdisk:,shared: -n qemu-sel4 -- "$@")
+
+eval set -- "$TEMP"
+
+usage () {
+    if [ -n "$1" ]; then
+        echo "ERROR: $1" 1>&2
+    fi
     cat << EOF
 Run QEMU as virtio device provider for seL4 VMs.
 
 usage: $0 [-h|--help]
 EOF
-    exit 0
+    if [ -n "$1" ]; then
+        exit 1
+    else
+        exit 0
+    fi
+}
+
+VMTMPDIR=$(mktemp -d)
+
+VMID=""
+
+GUEST_9P_ARGS=""
+GUEST_BLK_ARGS=""
+GUEST_GUI_ARGS="${GUEST_GUI_ARGS:--vga none -display none}"
+
+BLKID=0
+NETIF=""
+CONSOLE=false
+
+while true; do
+    BLKIMG=""
+    case "$1" in
+        -B | --cachedblock)
+            cp "$2" ${VMTMPDIR}
+            BLKIMG=${VMTMPDIR}/$(basename "$2")
+            BLKFMT="qcow2"
+            shift 2;;
+        -b | --block)
+            BLKIMG="$2"
+            BLKFMT="qcow2"
+            shift 2;;
+        -c | --console)
+            CONSOLE=true
+            shift;;
+        -h | --help)
+            usage
+            shift;;
+        -i | --id)
+            VMID="$2"
+            shift 2;;
+        -n | --net)
+            NETIF="$2"
+            shift 2;;
+        -r | --ramdisk)
+            BLKIMG=${VMTMPDIR}/ramdisk${BLKID}.raw
+            BLKFMT="raw"
+            qemu-img create -f ${BLKFMT} ${BLKIMG} "$2"
+            mke2fs ${BLKIMG}
+            shift 2;;
+        -s | --shared)
+            GUEST_9P_ARGS="${GUEST_9P_ARGS} -virtfs local,path=$2,mount_tag=shared,security_model=mapped-xattr"
+            shift 2;;
+        --)
+            shift
+            break;;
+        *)
+            break;;
+    esac
+    if [ -n "${BLKIMG}" ]; then
+        GUEST_BLK_ARGS="${GUEST_BLK_ARGS} -device virtio-blk-pci,drive=drive${BLKID},id=virtblk${BLKID}"
+        GUEST_BLK_ARGS="${GUEST_BLK_ARGS} -drive format=${BLKFMT},file=${BLKIMG},if=none,id=drive${BLKID}"
+        BLKID=$((${BLKID} + 1))
+    fi
+done
+
+if [ -z "${VMID}" ]; then
+    usage "VMID must be specified with -i argument"
 fi
 
-if test "x${VMID}" = "x"; then
-    VMID=1
-    echo "VMID not specified, defaulting to ${VMID}"
-fi
-
+# qemu reads VMID from its environment, hence we need to export it
 export VMID
 
-# rootfs for guest
-GUEST_IMG="${GUEST_IMG:-/var/lib/virt/images/user-vm.qcow2}"
-# directory shared to guest
-GUEST_SHARED="${GUEST_SHARED:-$HOME/.local/share/virt/shared}"
-mkdir -p "$GUEST_SHARED"
-
-GUEST_GUI_ARGS="${GUEST_GUI_ARGS:--vga none -display none}"
 GUEST_NET_ARGS=""
+GUEST_CONSOLE_ARGS=""
 
-case "${VMID}" in
-    1)
-        GUEST_NET_ARGS="${GUEST_NET_ARGS} -netdev tap,id=net0,ifname=tap0,script=no,downscript=no"
-        GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net0,mac=02:ca:fe:f0:0d:01"
-        echo "Guest using tap0 for network"
-        ;;
-    2)
-        GUEST_NET_ARGS="${GUEST_NET_ARGS} -netdev tap,id=net1,ifname=tap1,script=no,downscript=no"
-        GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net1,mac=02:ca:fe:f0:0d:02"
-        echo "Guest using tap1 for network"
-        ;;
-    *)
-        echo "Guest networking disabled"
-        ;;
-esac
+if [ -z "${NETIF}" ]; then
+    GUEST_NET_ARGS="${GUEST_NET_ARGS} -nic none"
+else
+    MAC_ADDR="02:ca:fe:f0:0d:"$(printf "%02x" $((${VMID} + 32)))
+    GUEST_NET_ARGS="${GUEST_NET_ARGS} -netdev tap,id=net${VMID},ifname="${NETIF}",script=no,downscript=no"
+    GUEST_NET_ARGS="${GUEST_NET_ARGS} -device virtio-net-pci,netdev=net${VMID},mac="${MAC_ADDR}
+fi
+
+if [ "${CONSOLE}" = true ]; then
+   GUEST_CONSOLE_ARGS="${GUEST_CONSOLE_ARGS} -device virtio-serial-pci"
+   GUEST_CONSOLE_ARGS="${GUEST_CONSOLE_ARGS} -device virtconsole,chardev=mon,id=console"${VMID}",name=vm"${VMID}
+fi
 
 QEMU_APPEND_BOOTARGS=""
-QEMU_EXTRA_ARGS="${GUEST_GUI_ARGS} ${GUEST_NET_ARGS}"
+QEMU_EXTRA_ARGS="${GUEST_CONSOLE_ARGS} ${GUEST_BLK_ARGS} ${GUEST_GUI_ARGS} ${GUEST_NET_ARGS} ${GUEST_9P_ARGS}"
 
 # Decode args like 'uservm=1,0x48000000,0x10000000,0x60000000,0x10000000'
 # TODO: use device tree
@@ -66,34 +129,8 @@ else
     ACCEL=kvm
 fi
 
+# catch all core dumps
 ulimit -c unlimited
-
-VMTMPDIR=/tmp/vm${VMID}
-mkdir -p ${VMTMPDIR}
-
-ROOTFS_STORAGE=${ROOTFS_STORAGE:-tmpfs}
-case "${ROOTFS_STORAGE}" in
-    tmpfs)
-        cp ${GUEST_IMG} ${VMTMPDIR}
-        GUEST_IMG=${VMTMPDIR}/`basename ${GUEST_IMG}`
-        echo "Guest rootfs: using volatile rootfs cached in host tmpfs" 1>&2
-        ;;
-    extra_ramdisk)
-        qemu-img create -f raw ${VMTMPDIR}/ramdisk.raw 128M
-        mke2fs ${VMTMPDIR}/ramdisk.raw
-        QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device virtio-blk-pci,drive=drive1,id=virtblk1"
-        QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -drive format=raw,file="${VMTMPDIR}"/ramdisk.raw,if=none,id=drive1"
-        echo "Guest rootfs: using host permanent storage at ${GUEST_IMG}" 1>&2
-        echo "Providing additional volatile 128 MB /dev/vdb to guest" 1>&2
-        ;;
-    host)
-        echo "Guest rootfs: using host permanent storage at ${GUEST_IMG}" 1>&2
-        ;;
-    *)
-        echo "Unknown storage class for guest rootfs" 1>&2
-        exit 1
-        ;;
-esac
 
 exec /usr/bin/qemu-system-aarch64 \
     `# minicom already uses ^A, change monitor escape to ^T` \
@@ -102,20 +139,12 @@ exec /usr/bin/qemu-system-aarch64 \
     --accel ${ACCEL} \
     -M virt \
     -m ${GUEST_MEMSZ}m \
-    `# virtio-blk device for guest rootfs` \
-    -device virtio-blk-pci,drive=drive0,id=virtblk0 \
-    -drive format=qcow2,file=${GUEST_IMG},if=none,id=drive0 \
-    `# share directory to guest over 9P` \
-    -virtfs local,path=${GUEST_SHARED},mount_tag=shared,security_model=mapped-xattr \
     `# debug messages, use monitor to read them` \
     -chardev ringbuf,id=debug,size=64K \
     `# enable multiplexer on stdio to have both guest and monitor` \
     -chardev stdio,id=mon,mux=on,signal=off \
     `# enable monitor` \
     -mon chardev=mon,mode=readline \
-    `# virtio-console` \
-    -device virtio-serial-pci \
-    -device virtconsole,chardev=mon,id=console0,name=qemu.uservm \
     `# no serial, emulating pl011 @ 0x09000000 in seL4 code` \
     -serial none \
     `# extra options` \
