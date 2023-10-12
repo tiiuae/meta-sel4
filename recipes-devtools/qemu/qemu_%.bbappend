@@ -12,9 +12,8 @@ PACKAGECONFIG:class-target = " \
     sel4 \
     virtfs \
     sdl \
-    glx \
-    virglrenderer \
     vhost \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'virglrenderer epoxy', '', d)} \
 "
 
 SRC_URI:remove = "https://download.qemu.org/${BPN}-${PV}.tar.xz"
