@@ -14,6 +14,7 @@ PACKAGECONFIG:class-target = " \
     sdl \
     glx \
     virglrenderer \
+    vhost \
 "
 
 SRC_URI:remove = "https://download.qemu.org/${BPN}-${PV}.tar.xz"
