@@ -1,55 +1,41 @@
-From 6a1890298c2178fec55d18b05141775b991c7c07 Mon Sep 17 00:00:00 2001
+From 54ead56002d1106b66797d0600f7b973f0c467a0 Mon Sep 17 00:00:00 2001
 From: Hannu Lyytinen <hannux@ssrc.tii.ae>
 Date: Tue, 28 Feb 2023 01:38:38 +0200
 Subject: [PATCH] Do not load DTB on seL4 guest
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
 This would break SWIOTLB boot.
 
 Signed-off-by: Hannu Lyytinen <hannux@ssrc.tii.ae>
+Signed-off-by: Markku Ahvenjärvi <markku.ahvenjarvi@unikie.com>
 
-%% original patch: 0001-Do-not-load-DTB.patch
+
 ---
- accel/sel4/sel4-all.c | 2 +-
- hw/arm/boot.c         | 6 ++++++
- 2 files changed, 7 insertions(+), 1 deletion(-)
+ hw/arm/boot.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/accel/sel4/sel4-all.c b/accel/sel4/sel4-all.c
-index 6b727e29cd..90c5a7bfbe 100644
---- a/accel/sel4/sel4-all.c
-+++ b/accel/sel4/sel4-all.c
-@@ -134,7 +134,7 @@ static int pci_resolve_irq(PCIDevice *pci_dev, int irq_num)
-     return irq_num;
- }
- 
--static inline bool using_sel4(void)
-+bool using_sel4(void)
- {
-     return virt_memmap_customize == sel4_memmap_customize;
- }
 diff --git a/hw/arm/boot.c b/hw/arm/boot.c
-index ada2717f76..e636c2c2bc 100644
+index ada2717f76..f30d033c9f 100644
 --- a/hw/arm/boot.c
 +++ b/hw/arm/boot.c
-@@ -529,6 +529,8 @@ static void fdt_add_psci_node(void *fdt)
-     qemu_fdt_setprop_cell(fdt, "/psci", "migrate", migrate_fn);
- }
- 
-+bool using_sel4(void);
-+
- int arm_load_dtb(hwaddr addr, const struct arm_boot_info *binfo,
-                  hwaddr addr_limit, AddressSpace *as, MachineState *ms)
- {
-@@ -540,6 +542,10 @@ int arm_load_dtb(hwaddr addr, const struct arm_boot_info *binfo,
+@@ -15,6 +15,7 @@
+ #include "hw/arm/boot.h"
+ #include "hw/arm/linux-boot-if.h"
+ #include "sysemu/kvm.h"
++#include "sysemu/sel4.h"
+ #include "sysemu/sysemu.h"
+ #include "sysemu/numa.h"
+ #include "hw/boards.h"
+@@ -540,6 +541,10 @@ int arm_load_dtb(hwaddr addr, const struct arm_boot_info *binfo,
      char **node_path;
      Error *err = NULL;
  
-+    if (using_sel4()) {
++    if (sel4_enabled()) {
 +        return 0;
 +    }
 +
      if (binfo->dtb_filename) {
          char *filename;
          filename = qemu_find_file(QEMU_FILE_TYPE_BIOS, binfo->dtb_filename);
--- 
-2.30.2
-
