@@ -24,6 +24,8 @@ mkdir -p "$GUEST_SHARED"
 
 GUEST_GUI_ARGS="${GUEST_GUI_ARGS:--vga none -display none}"
 GUEST_NET_ARGS=""
+# swiotlb args
+GUEST_VIRTIO_ARGS="-global virtio-pci.disable-legacy=on -global virtio-pci.iommu_platform=on"
 
 case "${VMID}" in
     1)
@@ -43,6 +45,7 @@ esac
 
 QEMU_APPEND_BOOTARGS=""
 QEMU_EXTRA_ARGS="${GUEST_GUI_ARGS} ${GUEST_NET_ARGS}"
+QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} ${GUEST_VIRTIO_ARGS}"
 
 # Decode args like 'uservm=1,0x48000000,0x10000000,0x60000000,0x10000000'
 # TODO: use device tree
