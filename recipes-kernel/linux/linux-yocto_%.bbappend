@@ -10,4 +10,5 @@ SRC_URI += " \
     file://v3d.cfg \
     file://pstore.cfg \
     file://swiotlb.cfg \
+    file://tap.cfg \
 "
