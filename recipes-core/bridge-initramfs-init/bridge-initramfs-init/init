@@ -25,14 +25,33 @@ EOF
 chmod 755 /etc/udhcpc.d/60nfsroot
 udhcpc -i br0 -O rootpath
 
-eval `grep rootpath= /udhcpc.env`
+cmdline=$(tr ' ' '\n' < /proc/cmdline)
+
+bootarg() {
+	echo "$cmdline" | grep "$1" | cut -f2- -d'='
+}
+
+root=$(bootarg "root=")
 
 mkdir /newroot
-nfsopts=`echo ${rootpath} | cut -d, -f2-`
-nfssource=`echo ${rootpath} | cut -d, -f1`
 
-mount -t nfs -o ${nfsopts} ${nfssource} /newroot
+if [ -z "$root" ] || [ "$root" = "/dev/nfs" ]; then
+	eval "$(grep rootpath= /udhcpc.env)"
 
-# TODO: how about dhcpc's files?
+	rootfstype=nfs
+	rootflags=$(echo "${rootpath}" | cut -d, -f2-)
+	root=$(echo "${rootpath}" | cut -d, -f1)
+
+	# TODO: how about dhcpc's files?
+else
+	rootfstype=$(bootarg "rootfstype=")
+	rootflags=$(bootarg "rootflags=")
+fi
+
+flags=""
+[ -n "$rootfstype" ] && flags="$flags -t$rootfstype"
+[ -n "$rootflags" ] && flags="$flags -o$rootflags"
+
+mount $flags $root /newroot
 
 exec switch_root /newroot /sbin/init
