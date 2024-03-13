@@ -2,20 +2,16 @@ QEMU_TARGETS = "aarch64"
 
 QEMU_SEL4_DEPS = ""
 QEMU_SEL4_DEPS:class-target = "kernel-module-sel4-virt"
-DEPENDS += "${QEMU_SEL4_DEPS}"
+DEPENDS += " \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'sel4', "${QEMU_SEL4_DEPS}", '', d)} \
+"
 
-PACKAGECONFIG[sel4] = "--enable-sel4,--disable-sel4,,"
 PACKAGECONFIG:class-target = " \
     fdt \
     pie \
     kvm \
-    sel4 \
     virtfs \
     sdl \
     vhost \
     ${@bb.utils.contains('DISTRO_FEATURES', 'opengl', 'virglrenderer epoxy', '', d)} \
 "
-
-SRC_URI:remove = "https://download.qemu.org/${BPN}-${PV}.tar.xz"
-SRC_URI += "gitsm://github.com/tiiuae/qemu-sel4-virtio.git;protocol=https;destsuffix=${BPN}-${PV};branch=tii/main"
-SRCREV = "${AUTOREV}"
