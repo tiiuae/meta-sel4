@@ -3,5 +3,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
 IMAGE_FSTYPES += " \
-    wic.qcow2 \
+    ext4.qcow2 \
 "
