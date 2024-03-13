@@ -2,7 +2,7 @@
 
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     cat << EOF
-Run QEMU as virtio device provider for seL4 VMs.
+Run QEMU as virtio device provider for TII hypervisor R&D.
 
 usage: $0 [-h|--help]
 EOF

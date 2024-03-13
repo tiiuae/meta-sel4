@@ -2,7 +2,7 @@
 
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 	cat << EOF
-Run QEMU with GUI as virtio device provider for seL4 VMs.
+Run QEMU with GUI as virtio device provider for TII hypervisor R&D.
 
 usage: $0 [-h|--help]
 EOF
@@ -38,7 +38,7 @@ GUEST_DISPLAY_DEVICE="${GUEST_DISPLAY_DEVICE:--device virtio-gpu-pci,virgl=on,ma
 # Default misc display arguments
 GUEST_DISPLAY_ARGS="${GUEST_DISPLAY_ARGS:--full-screen}"
 
-# Variables set for qemu-sel4
+# Variables set for qemu-tii
 export GUEST_GUI_ARGS="${GUEST_GUI_ARGS:-\
 	$GUEST_DISPLAY \
 	$GUEST_DISPLAY_DEVICE \
@@ -47,4 +47,4 @@ export GUEST_GUI_ARGS="${GUEST_GUI_ARGS:-\
 	$GUEST_KBD_DEV \
 }"
 
-exec qemu-sel4
+exec qemu-tii

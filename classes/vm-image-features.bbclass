@@ -1,19 +1,23 @@
-# Copyright 2022, Technology Innovation Institute
+# Copyright 2022, 2024, Technology Innovation Institute
 #
 # SPDX-License-Identifier: Apache-2.0
 
 inherit core-image
 
-FEATURE_PACKAGES_qemu-virtio = "\
+SEL4_VIRTIO_DEVICE_PACKAGES = " \
     kernel-module-sel4-virt \
     kernel-module-sel4-tracebuffer \
+"
+
+FEATURE_PACKAGES_virtio-device = "\
     qemu \
-    qemu-sel4-helpers \
-    qemu-sel4-helpers-gui \
+    qemu-tii-helper \
+    qemu-tii-helper-gui \
     screen \
     kernel-module-vhost \
     kernel-module-vhost-net \
     kernel-module-tap \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'sel4', "${SEL4_VIRTIO_DEVICE_PACKAGES}", "", d)} \
 "
 
 FEATURE_PACKAGES_benchmark = " \
